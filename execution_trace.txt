@@ -1,0 +1,66 @@
+================================================================================
+HAMLET-V2X: ARG2P EXECUTION TRACE
+================================================================================
+Date: 2026-02-27
+Engine: Arg2P v0.6.1 (ASPIC+ Implementation)
+Goal: buildLabelSets.
+Scenario: rain=true, jetson=true, v2x_hazard=true
+--------------------------------------------------------------------------------
+
+[1] ARGUMENT GENERATION PHASE
+-----------------------------
+The engine generated 33 arguments by combining transformations (stat, rad) 
+and algorithms (anc, cen).
+
+A0 : a1 : [algorithm(anc)]
+A1 : a2 : [algorithm(cen)]
+A2 : p2 : [jetson]
+A3 : p1 : [rain]
+A4 : t2 : [transformation(rad)]
+A5 : t1 : [transformation(stat)]
+A6 : p3 : [v2x_hazard]
+A7 : A0,g0 : [pipeline([], anc)]
+A8 : A1,g0 : [pipeline([], cen)]
+A9 : A3,A0,c1 : [neg, pipeline([], anc)]
+A10 : A6,A0,cv2x : [neg, pipeline([], anc)]
+A11 : A5,A1,c3_1 : [neg, pipeline([stat], cen)]
+A12 : A4,A0,g2 : [pipeline([rad], anc)]
+A13 : A4,A1,g2 : [pipeline([rad], cen)]
+A14 : A5,A0,g2 : [pipeline([stat], anc)]
+A15 : A5,A1,g2 : [pipeline([stat], cen)]
+...
+A22 : A4,A5,A0,g1 : [pipeline([rad, stat], anc)]
+A23 : A4,A5,A1,g1 : [pipeline([rad, stat], cen)]
+A24 : A5,A4,A0,g1 : [pipeline([stat, rad], anc)]
+A30 : A2,A4,A5,A0,c2_2 : [neg, pipeline([rad, stat], anc)]
+A32 : A2,A5,A4,A0,c2_3 : [neg, pipeline([stat, rad], anc)]
+
+--------------------------------------------------------------------------------
+
+[2] CONFLICT RESOLUTION & LABELLING
+-----------------------------------
+Labelling Mode: Grounded
+Ordering Principle: Last Link
+
+STATEMENTS LABELLED IN:
+-----------------------
+- [pipeline([stat], anc)]  <-- Valid Safe Pipeline (SOTIF & FuSa compliant)
+- [pipeline([], cen)]      <-- Safe (No mandatory filter constraint for 'cen')
+- [transformation(stat)]
+- [transformation(rad)]
+- [algorithm(cen)]
+- [algorithm(anc)]
+- [v2x_hazard]
+- [rain]
+- [jetson]
+- [neg, pipeline(...)]      <-- All safety rebuttals are IN
+
+STATEMENTS LABELLED NI (Not In / Rejected):
+-------------------------------------------
+- [pipeline([rad], anc)]   <-- REJECTED: FuSa Latency Violation (A17 rebuts A12)
+- [pipeline([], anc)]      <-- REJECTED: SOTIF/V2X Violation (A9/A10 rebut A7)
+- [pipeline([stat], cen)]  <-- REJECTED: Architectural Incompatibility (A11 rebuts A15)
+- [pipeline([stat, rad], anc)] <-- REJECTED: Contains forbidden filter 'rad'
+
+================================================================================
+END OF TRACE
