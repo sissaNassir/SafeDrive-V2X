@@ -1,7 +1,7 @@
 # Safe-V2X: SOTIF-Compliant ML Pipelines via Arg2P
 
 This repository provides the formal logic implementation and verification traces for the research paper:  
-**"Towards SOTIF-Compliant ML Pipelines: Integrating ISO 21448 Safety Constraints into the CRISP-DM Cycle"**.
+**"Explainable Functional Safety for Autonomous Driving: Integrating V2X and SOTIF Constraints into the CRISP-DM Cycle"**.
 
 ## 📌 Overview
 
@@ -42,6 +42,6 @@ This work builds upon the foundational research of logic-based AutoML and struct
 1.  **Original HAMLET Framework**: [QueueInc/HAMLET-DATAPLAT2022](https://github.com/QueueInc/HAMLET-DATAPLAT2022) (Foundational implementation for Human-centric AutoML via Logic and Argumentation).
 2.  **Arg2P Technology**: Calegari, R., Pisano, G., et al. (2022). *"Arg2P: An argumentation framework for explainable intelligent systems,"* Journal of Logic and Computation.
 3.  **SOTIF Standard**: ISO 21448:2022, *"Road vehicles — Safety of the intended functionality"*.
-4.  **Proposed Methodology**: Silvia Zandoli, Luca Foschini, *"Towards SOTIF-Compliant ML Pipelines: Integrating ISO 21448 Safety Constraints into the CRISP-DM Cycle,"* VTC 2026.
+4.  **Proposed Methodology**: Silvia Zandoli, Luca Foschini, *"Explainable Functional Safety for Autonomous Driving: Integrating V2X and SOTIF Constraints into the CRISP-DM Cycle"* VTC 2026.
 
 ---
