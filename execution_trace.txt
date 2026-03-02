@@ -50,16 +50,17 @@ A12 : A3,A1,c1 : [neg, pipeline([], cen)] [IN]
     |--- A3 : p1 : [rain] [IN]
     |--- A1 : a2 : [algorithm(cen)] [IN]
     --> REFUTES A9: Eliminates Known-Unsafe Scenario (Area 2) for CenterPoint.
+        (Note: Generic rules ensure coverage for both anc and cen).
 
 % 2. Dual Constraint Enforcement: 'rad' blocked by Hardware AND Network
 A20 : A2,A4,A0,c2_1 : [neg, pipeline([rad], anc)] [IN] (Source: Jetson FuSa)
 A21 : A7,A4,A0,cv2x2_1 : [neg, pipeline([rad], anc)] [IN] (Source: V2X Latency)
-    --> BOTH attack A15: Demonstrates redundant safety layers.
+    --> BOTH attack A15: Demonstrates redundant safety layers against latency.
 
 % 3. Recursive Multi-step Safety: Contamination detection in filter chains
 A39 : A2,A4,A5,A0,c2_2 : [neg, pipeline([rad, stat], anc)] [IN]
     |--- A2 : p2 : [jetson] [IN]
-    |--- A4 : t2 : [transformation(rad)] [IN]  <-- Pollutant
+    |--- A4 : t2 : [transformation(rad)] [IN]  <-- Pollutant identified
     |--- A5 : t1 : [transformation(stat)] [IN]
     --> Safety logic identifies 'rad' presence regardless of chain position.
 
@@ -94,14 +95,14 @@ ISO 21448 HAZARD AREA CLASSIFICATION (Compliance Map):
 ├─ Area 1 (Known-Safe):         0 configurations (None exist inherently safe w/o checks)
 ├─ Area 2 (Known-Unsafe):       46 configurations (ELIMINATED via Logic Constraints)
 │   └─ Example: Empty pipeline under rain (SOTIF Violation)
-├─ Area 3 (Unknown-Unsafe):     0 configurations (Mitigation via Validation per Clause 11)
+├─ Area 3 (Unknown-Unsafe):     N/A (Not covered by Logic - Requires Validation)
 └─ Area 4 (Unknown-Safe):       N/A (Outside Scope of this Case Study)
 
 VERIFICATION METRICS:
 --------------------
 Total Search Space Evaluated:        47 Arguments (Combinatorial Space)
 Safe Configurations Identified:      1 (pipeline([stat], anc))
-Rejection Rate:                      97.8% (46 Unsafe Scenarios Pruned)
+Rejection Rate:                      97.9% (46 Unsafe Scenarios Pruned)
 Logical Recalculation Overhead:      0.20 ms (Deterministic < 1ms Threshold)
 
 ISO Compliance Status:
@@ -117,7 +118,7 @@ logical methodology for explainable functional safety. The system achieves:
 
 ✓ ZERO VIOLATIONS of known safety requirements (Area 2 Elimination Confirmed)
 ✓ COMPLETE TRACEABILITY from safety goals to algorithm selection (Clause 10 Evidence)
-✓ DETERMINISTIC REAL-TIME RECALCULATION under worst-case conditions (< 0.25 ms)
+✓ DETERMINISTIC REAL-TIME RECALCULATION under worst-case conditions (0.20 ms)
 
 The anomaly regarding empty pipelines for 'cen' is fully resolved: the updated 
 generic logical rules now enforce safety across the entire fleet regardless 
