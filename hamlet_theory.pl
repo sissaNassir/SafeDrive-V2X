@@ -1,4 +1,3 @@
-
 % =========================================================
 % 1. SEARCH SPACE (Empty brackets [] are mandatory for axioms)
 % =========================================================
@@ -12,7 +11,8 @@ a2 : [] => algorithm(cen).       % Center-based (CenterPoint)
 % =========================================================
 p1 : [] => rain.               % SOTIF Triggering Condition
 p2 : [] => jetson.             % FuSa Hardware Constraint (Embedded ECU)
-p3 : [] => v2x_hazard.         % Cooperative V2X Trigger
+p3 : [] => v2x_hazard.         % Cooperative V2X Trigger (Hazard Warning)
+p4 : [] => v2x_latency_high.   % Cooperative V2X Trigger (Network Delay)
 
 % =========================================================
 % 3. GENERATION ENGINE (Combinatorial pipeline construction)
@@ -35,11 +35,16 @@ c2_1 : jetson, transformation(rad), algorithm(A) => -pipeline([rad], A).
 c2_2 : jetson, transformation(rad), transformation(Y), algorithm(A) => -pipeline([rad, Y], A).
 c2_3 : jetson, transformation(X), transformation(rad), algorithm(A) => -pipeline([X, rad], A).
 
-% B. SOTIF / V2X: Rain or Hazard signal makes filtering mandatory for 'anc'
-c1 : rain, algorithm(anc) => -pipeline([], anc).
-cv2x : v2x_hazard, algorithm(anc) => -pipeline([], anc).
+% B. SOTIF / V2X1: Rain or Hazard signal makes filtering mandatory for ANY algorithm (A)
+c1 : rain, algorithm(A) => -pipeline([], A).
+cv2x1 : v2x_hazard, algorithm(A) => -pipeline([], A).
 
-% C. Architectural Compatibility: 'stat' and 'cen' are mutually incompatible
+% C. V2X2: High network latency dynamically forbids heavy 'rad' filter
+cv2x2_1 : v2x_latency_high, transformation(rad), algorithm(A) => -pipeline([rad], A).
+cv2x2_2 : v2x_latency_high, transformation(rad), transformation(Y), algorithm(A) => -pipeline([rad, Y], A).
+cv2x2_3 : v2x_latency_high, transformation(X), transformation(rad), algorithm(A) => -pipeline([X, rad], A).
+
+% D. Architectural Compatibility: 'stat' and 'cen' are mutually incompatible
 c3_1 : transformation(stat), algorithm(cen) => -pipeline([stat], cen).
 c3_2 : transformation(stat), transformation(Y), algorithm(cen) => -pipeline([stat, Y], cen).
 c3_3 : transformation(X), transformation(stat), algorithm(cen) => -pipeline([X, stat], cen).
@@ -48,13 +53,11 @@ c3_3 : transformation(X), transformation(stat), algorithm(cen) => -pipeline([X, 
 % 5. PREFERENCES (Safety constraints defeat generation rules)
 % This ensures that unsafe arguments are always labeled as OUT.
 % =========================================================
-sup(c2_1, g2).
-sup(c2_2, g1).
-sup(c2_3, g1).
+sup(c2_1, g2). sup(c2_2, g1). sup(c2_3, g1).
 
 sup(c1, g0).
-sup(cv2x, g0).
+sup(cv2x1, g0).
 
-sup(c3_1, g2).
-sup(c3_2, g1).
-sup(c3_3, g1).
+sup(cv2x2_1, g2). sup(cv2x2_2, g1). sup(cv2x2_3, g1).
+
+sup(c3_1, g2). sup(c3_2, g1). sup(c3_3, g1).
