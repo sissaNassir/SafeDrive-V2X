@@ -1,131 +1,54 @@
-================================================================================
-HAMLET-V2X / SAFE-V2X: FORMAL VERIFICATION LOG (FINAL REVISION)
-================================================================================
-Date: 2026-03-15
-Engine: Arg2P v0.6.1 (ASPIC+ Structured Argumentation Framework)
-Labelling Semantics: Grounded Extension
-Scenario Triggers: rain=true, jetson=true, v2x_hazard=true, v2x_latency_high=true
---------------------------------------------------------------------------------
+% =========================================================
+% HAMLET-V2X Execution Trace - LiDAR Perception Case Study
+% =========================================================
 
-[SECTION 1: ARGUMENT INDEX (COMBINATORIAL EXPLORATION)]
--------------------------------------------------------
-The engine generated 47 arguments (A0-A46), exploring the full search space 
-of empty, single, and multi-step LiDAR pipelines under safety constraints.
+% INPUT THEORY (Simplified for readability)
+% Steps & Algorithms
+t1 : [] => transformation(stat).
+t2 : [] => transformation(rad).
+t3 : [] => transformation(none).
+a1 : [] => algorithm(anc).
+a2 : [] => algorithm(cen).
 
-A0-A7 : [Premises & Base Components]
-       |-> Triggers: rain(A3), jetson(A2), v2x_hazard(A6), v2x_latency_high(A7)
-       |-> Algorithms: algorithm(anc)(A0), algorithm(cen)(A1)
-       |-> Transformations: transformation(rad)(A4), transformation(stat)(A5)
+% Triggering Conditions
+p1 : [] => rain.
+p2 : [] => jetson.
+p3 : [] => v2x_hazard.
+p4 : [] => v2x_latency_high.
 
-A8-A9 : [Generation - Empty Pipelines]
-       |-> A8: pipeline([], anc) [g0]
-       |-> A9: pipeline([], cen) [g0]  <-- Target of SOTIF Rebuttals
+% Pipeline Generation
+g0 : algorithm(A) => pipeline([], A).
+g1 : transformation(T), algorithm(A) => pipeline([T], A).
+g2 : transformation(T1), transformation(T2), T1 == T2, algorithm(A) => pipeline([T1,T2], A).
 
-A10-A13: [SOTIF/V2X Rebuttals - Mandatory Filtering]
-       |-> A10, A11: Negate [], anc (Rain/Hazard vs Anc)
-       |-> A12, A13: Negate [], cen  (Rain/Hazard vs Cen) [FIXED: Applies to ALL algos]
+% Safety Constraints
+c1 : rain => mandatory_filter.
+cv1 : v2x_hazard => mandatory_filter.
+c2 : jetson => invalid_rad.
+cv2 : v2x_latency_high => invalid_rad.
+c3 : [] => invalid_stat_cen.
 
-A14     : [Compatibility Rebuttal]
-       |-> A14: Negates [stat] + cen [c3_1]
+% Conflict Rules & Preferences (omitted for brevity)
 
-A15-A16, A27-A30 : [Generation - Single/Multi-step Pipelines]
-       |-> Includes [rad], [stat], [rad,stat], [stat,rad] variants
+% =========================================================
+% GROUNDED EXTENSION (Final Safe Search Space)
+% =========================================================
 
-A17     : [WINNER] pipeline([stat], anc)
-       |-> UNIQUE Configuration with NO ATTACKS RECORD (Grounded Extension)
+% Only one pipeline survives the grounded semantics:
+A20 : [t1, g1, a1] : [pipeline([stat], anc)] [IN]
 
-A20-A23, A31-A46: [FuSa/V2X/Multi-step Safety Pruning]
-       |-> Systematic negation of 'rad' usage due to Latency/Jetson limits
+% All other configurations are defeated:
 
---------------------------------------------------------------------------------
+% Unsafe configurations (Area 2 eliminated)
+A14 : [g0, a1] : [pipeline([], anc)] [OUT] ← attacked by mandatory_filter (c1/cv1)
+A15 : [g0, a2] : [pipeline([], cen)] [OUT] ← attacked by mandatory_filter (c1/cv1)
+A16 : [t3, g1, a1] : [pipeline([none], anc)] [OUT] ← attacked by mandatory_filter
+A17 : [t3, g1, a2] : [pipeline([none], cen)] [OUT] ← attacked by mandatory_filter
+A18 : [t2, g1, a1] : [pipeline([rad], anc)] [OUT] ← attacked by invalid_rad (c2/cv2)
+A19 : [t2, g1, a2] : [pipeline([rad], cen)] [OUT] ← attacked by invalid_rad (c2/cv2)
+A21 : [t1, g1, a2] : [pipeline([stat], cen)] [OUT] ← attacked by invalid_stat_cen (c3)
 
-[SECTION 2: TRACEABILITY TREES (ISO 21448 CLAUSE 10 COMPLIANCE)]
-----------------------------------------------------------------
-These trees provide the "Evidence of Verification" required by SOTIF. 
-They show that even complex multi-step pipelines are pruned if they contain 
-a single unsafe component.
-
-% 1. SOTIF Reaction: Rain enforces mandatory filtering across ALL detectors
-A12 : A3,A1,c1 : [neg, pipeline([], cen)] [IN]
-    |--- A3 : p1 : [rain] [IN]
-    |--- A1 : a2 : [algorithm(cen)] [IN]
-    --> REFUTES A9: Eliminates Known-Unsafe Scenario (Area 2) for CenterPoint.
-        (Note: Generic rules ensure coverage for both anc and cen).
-
-% 2. Dual Constraint Enforcement: 'rad' blocked by Hardware AND Network
-A20 : A2,A4,A0,c2_1 : [neg, pipeline([rad], anc)] [IN] (Source: Jetson FuSa)
-A21 : A7,A4,A0,cv2x2_1 : [neg, pipeline([rad], anc)] [IN] (Source: V2X Latency)
-    --> BOTH attack A15: Demonstrates redundant safety layers against latency.
-
-% 3. Recursive Multi-step Safety: Contamination detection in filter chains
-A39 : A2,A4,A5,A0,c2_2 : [neg, pipeline([rad, stat], anc)] [IN]
-    |--- A2 : p2 : [jetson] [IN]
-    |--- A4 : t2 : [transformation(rad)] [IN]  <-- Pollutant identified
-    |--- A5 : t1 : [transformation(stat)] [IN]
-    --> Safety logic identifies 'rad' presence regardless of chain position.
-
-% 4. Architectural Consistency: Data-format validation
-A14 : A5,A1,c3_1 : [neg, pipeline([stat], cen)] [IN]
-    |--- A5 : t1 : [transformation(stat)] [IN]
-    |--- A1 : a2 : [algorithm(cen)] [IN]
-    --> Ensures no incompatible pairing (e.g., Stat Filter + CenterPoint Head).
-
---------------------------------------------------------------------------------
-
-[SECTION 3: CONFLICT RESOLUTION & GROUNDED EXTENSION]
------------------------------------------------------
-The system collapsed 47 potential arguments into a single safe state.
-
-STATEMENTS LABELLED IN (Safe & Certifiable):
---------------------------------------------
-- [pipeline([stat], anc)]       <-- THE UNDEFEATED WINNER (Corresponds to p3 in Fig. 1)
-- [neg, pipeline(...)]          <-- All 22+ Security Rebuttals verified as Active
-
-STATEMENTS LABELLED OUT (Pruned/Unsafe):
-----------------------------------------
-| Category                  | Configurations           | Reason                          |
-|---------------------------|--------------------------|---------------------------------|
-| No Filtering (Empty)      | [], anc; [], cen         | Violates SOTIF (Area 2)         |
-| Heavy Computation         | [rad], ...               | Violates FuSa (Latency)         |
-| Network Degradation       | [rad], ...               | Violates V2X (Adaptation)       |
-| Architecture Mismatch     | [..., stat, cen]         | Violates Compatibility          |
-
-ISO 21448 HAZARD AREA CLASSIFICATION (Compliance Map):
-------------------------------------------------------
-├─ Area 1 (Known-Safe):         0 configurations (None exist inherently safe w/o checks)
-├─ Area 2 (Known-Unsafe):       46 configurations (ELIMINATED via Logic Constraints)
-│   └─ Example: Empty pipeline under rain (SOTIF Violation)
-├─ Area 3 (Unknown-Unsafe):     N/A (Not covered by Logic - Requires Validation)
-└─ Area 4 (Unknown-Safe):       N/A (Outside Scope of this Case Study)
-
-VERIFICATION METRICS:
---------------------
-Total Search Space Evaluated:        47 Arguments (Combinatorial Space)
-Safe Configurations Identified:      1 (pipeline([stat], anc))
-Rejection Rate:                      97.9% (46 Unsafe Scenarios Pruned)
-Logical Recalculation Overhead:      0.20 ms (Deterministic < 1ms Threshold)
-
-ISO Compliance Status:
-├─ ISO 26262 Functional Safety: ✅ PASSED (Systematic failures mitigated by c2)
-├─ ISO 21448 SOTIF Area 2: ✅ PASSED (Known-unsafe scenarios eliminated by c1/cv2x)
-└─ V2X Cooperative Adaptation: ✅ PASSED (Dynamic constraint recalculation verified)
-
-================================================================================
-SUMMARY CONCLUSION
-------------------
-This formal verification demonstrates the correctness of HAMLET-V2X's 
-logical methodology for explainable functional safety. The system achieves:
-
-✓ ZERO VIOLATIONS of known safety requirements (Area 2 Elimination Confirmed)
-✓ COMPLETE TRACEABILITY from safety goals to algorithm selection (Clause 10 Evidence)
-✓ DETERMINISTIC REAL-TIME RECALCULATION under worst-case conditions (0.20 ms)
-
-The anomaly regarding empty pipelines for 'cen' is fully resolved: the updated 
-generic logical rules now enforce safety across the entire fleet regardless 
-of the specific detection algorithm architecture. 
-
-This trace serves as direct objective evidence for the Verification and 
-Validation Report required by ISO 21448, streamlining certification evidence 
-generation for adaptive perception pipelines in Autonomous Driving.
-================================================================================
-END OF TRACE
+% Key Rebuttals (Explainability Evidence)
+[[p1, c1], c1, [mandatory_filter], [[rain]], ...] rebuts [[g0, a1], ... [pipeline([], anc)]]
+[[p2, c2], c2, [invalid_rad], [[jetson]], ...] rebuts [[t2, g1, a1], ... [pipeline([rad], anc)]]
+[[c3], c3, [invalid_stat_cen], [], ...] rebuts [[t1, g1, a2], ... [pipeline([stat], cen)]]
