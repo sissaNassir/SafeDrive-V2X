@@ -1,63 +1,63 @@
 % =========================================================
-% 1. SEARCH SPACE (Empty brackets [] are mandatory for axioms)
+% 1. TRANSFORMATIONS AND ALGORITHMS
 % =========================================================
 t1 : [] => transformation(stat). % Statistical Outlier Removal
-t2 : [] => transformation(rad).  % Radius Outlier Removal
-a1 : [] => algorithm(anc).       % Anchor-based (PointPillars)
-a2 : [] => algorithm(cen).       % Center-based (CenterPoint)
+t2 : [] => transformation(rad). % Radius Outlier Removal
+t3 : [] => transformation(none). % No filter baseline
+
+a1 : [] => algorithm(anc). % Anchor-based (PointPillars)
+a2 : [] => algorithm(cen). % Center-based (CenterPoint)
 
 % =========================================================
-% 2. SCENARIOS (Environmental and hardware triggering conditions)
+% 2. TRIGGERING CONDITIONS (ODD & Hardware)
 % =========================================================
-p1 : [] => rain.               % SOTIF Triggering Condition
-p2 : [] => jetson.             % FuSa Hardware Constraint (Embedded ECU)
-p3 : [] => v2x_hazard.         % Cooperative V2X Trigger (Hazard Warning)
-p4 : [] => v2x_latency_high.   % Cooperative V2X Trigger (Network Delay)
-
-% =========================================================
-% 3. GENERATION ENGINE (Combinatorial pipeline construction)
-% =========================================================
-% g0: Empty pipeline
-g0 : algorithm(Z) => pipeline([], Z).
-% g1: Multi-step pipeline (filter concatenation)
-g1 : transformation(X), transformation(Y), algorithm(Z), prolog(X \== Y) => pipeline([X, Y], Z).
-% g2: Single-filter pipeline
-g2 : transformation(X), algorithm(Z) => pipeline([X], Z).
+p1 : [] => rain.
+p2 : [] => jetson.
+p3 : [] => v2x_hazard.
+p4 : [] => v2x_latency_high.
 
 % =========================================================
-% 4. SAFETY CONSTRAINTS (Native ASPIC+ Rebuttals)
-% Instead of custom conflict rules, we use strong negation "-" 
-% to conclude that a specific pipeline MUST NOT be generated.
+% 3. PIPELINE GENERATION
 % =========================================================
+g0 : algorithm(A) => pipeline([], A).
 
-% A. Functional Safety (FuSa): Jetson forbids 'rad' due to latency (ISO 26262 Pt. 11)
-c2_1 : jetson, transformation(rad), algorithm(A) => -pipeline([rad], A).
-c2_2 : jetson, transformation(rad), transformation(Y), algorithm(A) => -pipeline([rad, Y], A).
-c2_3 : jetson, transformation(X), transformation(rad), algorithm(A) => -pipeline([X, rad], A).
+g1 : transformation(T), algorithm(A) => pipeline([T], A).
 
-% B. SOTIF / V2X1: Rain or Hazard signal makes filtering mandatory for ANY algorithm (A)
-c1 : rain, algorithm(A) => -pipeline([], A).
-cv2x1 : v2x_hazard, algorithm(A) => -pipeline([], A).
-
-% C. V2X2: High network latency dynamically forbids heavy 'rad' filter
-cv2x2_1 : v2x_latency_high, transformation(rad), algorithm(A) => -pipeline([rad], A).
-cv2x2_2 : v2x_latency_high, transformation(rad), transformation(Y), algorithm(A) => -pipeline([rad, Y], A).
-cv2x2_3 : v2x_latency_high, transformation(X), transformation(rad), algorithm(A) => -pipeline([X, rad], A).
-
-% D. Architectural Compatibility: 'stat' and 'cen' are mutually incompatible
-c3_1 : transformation(stat), algorithm(cen) => -pipeline([stat], cen).
-c3_2 : transformation(stat), transformation(Y), algorithm(cen) => -pipeline([stat, Y], cen).
-c3_3 : transformation(X), transformation(stat), algorithm(cen) => -pipeline([X, stat], cen).
+% NOTE THE == OPERATOR HERE:
+g2 : transformation(T1), transformation(T2), T1 == T2, algorithm(A) => pipeline([T1,T2], A).
 
 % =========================================================
-% 5. PREFERENCES (Safety constraints defeat generation rules)
-% This ensures that unsafe arguments are always labeled as OUT.
+% 4. SAFETY CONSTRAINTS (Abstract Requirements)
 % =========================================================
-sup(c2_1, g2). sup(c2_2, g1). sup(c2_3, g1).
+c1 : rain => mandatory_filter.
+cv1 : v2x_hazard => mandatory_filter.
 
-sup(c1, g0).
-sup(cv2x1, g0).
+c2 : jetson => invalid_rad.
+cv2 : v2x_latency_high => invalid_rad.
 
-sup(cv2x2_1, g2). sup(cv2x2_2, g1). sup(cv2x2_3, g1).
+c3 : [] => invalid_stat_cen.
 
-sup(c3_1, g2). sup(c3_2, g1). sup(c3_3, g1).
+% =========================================================
+% 5. CONFLICT RULES (Explainable Mappings)
+% =========================================================
+% Mandatory filter
+conflict([mandatory_filter], [pipeline([], A)]).
+conflict([mandatory_filter], [pipeline([none], A)]).
+
+% Invalid rad (single and in combination)
+conflict([invalid_rad], [pipeline([rad], A)]).
+conflict([invalid_rad], [pipeline([T, rad], A)]).
+conflict([invalid_rad], [pipeline([rad, T], A)]).
+
+% Invalid stat + cen (single and in combination)
+conflict([invalid_stat_cen], [pipeline([stat], cen)]).
+conflict([invalid_stat_cen], [pipeline([T, stat], cen)]).
+conflict([invalid_stat_cen], [pipeline([stat, T], cen)]).
+
+% =========================================================
+% 6. PREFERENCES
+% =========================================================
+sup(c1, g0). sup(cv1, g0).
+sup(c2, g1). sup(cv2, g1).
+sup(c2, g2). sup(cv2, g2).
+sup(c3, g1). sup(c3, g2).
