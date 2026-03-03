@@ -1,54 +1,32 @@
-% =========================================================
-% HAMLET-V2X Execution Trace - LiDAR Perception Case Study
-% =========================================================
+# HAMLET-V2X Execution Trace - LiDAR Perception Case Study
 
-% INPUT THEORY (Simplified for readability)
-% Steps & Algorithms
-t1 : [] => transformation(stat).
-t2 : [] => transformation(rad).
-t3 : [] => transformation(none).
-a1 : [] => algorithm(anc).
-a2 : [] => algorithm(cen).
+**Scenario:** Rain + Jetson + V2X Hazard Warning active
 
-% Triggering Conditions
-p1 : [] => rain.
-p2 : [] => jetson.
-p3 : [] => v2x_hazard.
-p4 : [] => v2x_latency_high.
+### Grounded Extension (Final Safe Search Space)
 
-% Pipeline Generation
-g0 : algorithm(A) => pipeline([], A).
-g1 : transformation(T), algorithm(A) => pipeline([T], A).
-g2 : transformation(T1), transformation(T2), T1 == T2, algorithm(A) => pipeline([T1,T2], A).
+Only **one pipeline** survives the grounded semantics:
 
-% Safety Constraints
-c1 : rain => mandatory_filter.
-cv1 : v2x_hazard => mandatory_filter.
-c2 : jetson => invalid_rad.
-cv2 : v2x_latency_high => invalid_rad.
-c3 : [] => invalid_stat_cen.
+- `[stat, anc]` → `pipeline([stat], anc)` **[IN]** ✓ Safe configuration
 
-% Conflict Rules & Preferences (omitted for brevity)
+### Defeated Configurations (Area 2 eliminated)
 
-% =========================================================
-% GROUNDED EXTENSION (Final Safe Search Space)
-% =========================================================
+| Pipeline              | Status | Reason                                   | Attacked by              |
+|-----------------------|--------|------------------------------------------|--------------------------|
+| `[]`                  | OUT    | No filter (SOTIF violation)              | `mandatory_filter`       |
+| `[none]`              | OUT    | Insufficient filter                      | `mandatory_filter`       |
+| `[rad]`               | OUT    | Exceeds hardware latency (FuSa)          | `invalid_rad`            |
+| `[rad, *]`            | OUT    | Exceeds hardware latency (FuSa)          | `invalid_rad`            |
+| `[stat, cen]`         | OUT    | Architectural incompatibility            | `invalid_stat_cen`       |
 
-% Only one pipeline survives the grounded semantics:
-A20 : [t1, g1, a1] : [pipeline([stat], anc)] [IN]
+### Key Rebuttals (Explainability Evidence)
 
-% All other configurations are defeated:
+- `rain` + `c1`          rebuts empty and `none` pipelines
+- `jetson` + `c2`        rebuts all pipelines containing `rad`
+- `v2x_hazard` + `cv1`   reinforces mandatory filter requirement
+- `v2x_latency_high` + `cv2` reinforces `invalid_rad`
+- `c3`                   rebuts all `stat` + `cen` combinations
 
-% Unsafe configurations (Area 2 eliminated)
-A14 : [g0, a1] : [pipeline([], anc)] [OUT] ← attacked by mandatory_filter (c1/cv1)
-A15 : [g0, a2] : [pipeline([], cen)] [OUT] ← attacked by mandatory_filter (c1/cv1)
-A16 : [t3, g1, a1] : [pipeline([none], anc)] [OUT] ← attacked by mandatory_filter
-A17 : [t3, g1, a2] : [pipeline([none], cen)] [OUT] ← attacked by mandatory_filter
-A18 : [t2, g1, a1] : [pipeline([rad], anc)] [OUT] ← attacked by invalid_rad (c2/cv2)
-A19 : [t2, g1, a2] : [pipeline([rad], cen)] [OUT] ← attacked by invalid_rad (c2/cv2)
-A21 : [t1, g1, a2] : [pipeline([stat], cen)] [OUT] ← attacked by invalid_stat_cen (c3)
+**Conclusion:**  
+The argumentation engine successfully eliminates all known unsafe (Area 2) configurations while preserving only the safe pipeline `[stat, anc]`. This demonstrates formal safety guarantees with deterministic reasoning.
 
-% Key Rebuttals (Explainability Evidence)
-[[p1, c1], c1, [mandatory_filter], [[rain]], ...] rebuts [[g0, a1], ... [pipeline([], anc)]]
-[[p2, c2], c2, [invalid_rad], [[jetson]], ...] rebuts [[t2, g1, a1], ... [pipeline([rad], anc)]]
-[[c3], c3, [invalid_stat_cen], [], ...] rebuts [[t1, g1, a2], ... [pipeline([stat], cen)]]
+Repository: SafeDrive-V2X
