@@ -23,8 +23,8 @@ g0 : algorithm(A) => pipeline([], A).
 
 g1 : transformation(T), algorithm(A) => pipeline([T], A).
 
-% NOTE: Use \== (not equal) to generate different filter combinations
-g2 : transformation(T1), transformation(T2), T1 \== T2, algorithm(A) => pipeline([T1,T2], A).
+% NOTE: Wrapped the inequality in prolog() to evaluate it natively
+g2 : transformation(T1), transformation(T2), prolog(T1 \== T2), algorithm(A) => pipeline([T1,T2], A).
 
 % =========================================================
 % 4. CONSTRAINTS
