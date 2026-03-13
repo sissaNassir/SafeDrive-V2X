@@ -4,9 +4,11 @@
 
 ### Grounded Extension (Final Safe Search Space)
 
-Only **one pipeline** survives the grounded semantics:
+Only **one functional pipeline** (along with its harmless `none` permutations) survives the grounded semantics:
 
 - `[stat, anc]` → `pipeline([stat], anc)` **[IN]** ✓ Safe configuration
+- `[stat, none, anc]` → `pipeline([stat, none], anc)` **[IN]** ✓ Safe (equivalent)
+- `[none, stat, anc]` → `pipeline([none, stat], anc)` **[IN]** ✓ Safe (equivalent)
 
 ### Defeated Configurations (Area 2 eliminated)
 
@@ -26,7 +28,6 @@ Only **one pipeline** survives the grounded semantics:
 - `v2x_latency_high` + `cv2` reinforces `invalid_rad`
 - `c3`                   rebuts all `stat` + `cen` combinations
 
-**Conclusion:**  
-The argumentation engine successfully eliminates all known unsafe (Area 2) configurations while preserving only the safe pipeline `[stat, anc]`. This demonstrates formal safety guarantees with deterministic reasoning.
+**Conclusion:** The argumentation engine successfully eliminates all known unsafe (Area 2) configurations while preserving only the safe functional pipeline `[stat, anc]` (and its permutations). This demonstrates formal safety guarantees with deterministic reasoning.
 
 Repository: SafeDrive-V2X
