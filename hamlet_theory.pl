@@ -11,11 +11,10 @@ a2 : [] => algorithm(cen).           % Center-based (CenterPoint)
 % =========================================================
 % 2. TRIGGERING CONDITIONS (ODD & Hardware)
 % =========================================================
-p1        : [] => rain.
-p1_night  : [] => night.              % Low-light/night condition
-p2        : [] => jetson.
-p3        : [] => v2x_hazard.
-p4        : [] => v2x_latency_high.
+p1 : [] => rain.
+p2 : [] => jetson.
+p3 : [] => v2x_hazard.
+p4 : [] => v2x_latency_high.
 
 % =========================================================
 % 3. PIPELINE GENERATION
@@ -30,9 +29,8 @@ g2 : transformation(T1), transformation(T2), prolog(T1 \== T2), algorithm(A) => 
 % =========================================================
 % 4. CONSTRAINTS
 % =========================================================
-c1       : rain       => mandatory_filter.
-c1_night : night      => mandatory_filter.  % Night condition requires filtering
-cv1      : v2x_hazard => mandatory_filter.
+c1  : rain       => mandatory_filter.
+cv1 : v2x_hazard => mandatory_filter.
 
 c2  : jetson           => invalid_rad.
 cv2 : v2x_latency_high => invalid_rad.
@@ -60,7 +58,6 @@ conflict([invalid_stat_cen], [pipeline([stat, T], cen)]).
 % =========================================================
 % Mandatory filter constraints prevail over pipeline generation
 sup(c1, g0).        sup(c1, g1).        sup(c1, g2).
-sup(c1_night, g0).  sup(c1_night, g1).  sup(c1_night, g2).
 sup(cv1, g0).       sup(cv1, g1).       sup(cv1, g2).
 
 % Other constraints
