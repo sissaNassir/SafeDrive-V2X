@@ -44,7 +44,7 @@ The argumentation engine successfully eliminates all known unsafe
 (Area 2) configurations and redundant search spaces, converging on 
 exactly one safe, functional pipeline: [stat, anc]. 
 This demonstrates formal safety guarantees with deterministic 
-reasoning and a bounded logical overhead of 3.24 ms, well within 
+reasoning and a bounded logical overhead of 4.29 ms, well within 
 automotive perception cycle budgets.
 
 Repository: SafeDrive-V2X
