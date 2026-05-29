@@ -1,33 +1,50 @@
-# HAMLET-V2X Execution Trace - LiDAR Perception Case Study
+====================================================================
+HAMLET-V2X Execution Trace - LiDAR Perception Case Study
+====================================================================
 
-**Scenario:** Rain + Jetson + V2X Hazard Warning active
+Scenario: Rain + Night + Jetson + V2X Hazard Warning active
 
-### Grounded Extension (Final Safe Search Space)
+--------------------------------------------------------------------
+1. GROUNDED EXTENSION (Final Safe Search Space)
+--------------------------------------------------------------------
+Only one highly optimized and safe pipeline survives the grounded 
+semantics. The logic engine formally discards redundant permutations 
+(e.g., adding a 'none' filter to a valid pipeline):
 
-Only **one functional pipeline** (along with its harmless `none` permutations) survives the grounded semantics:
+[IN] pipeline([stat], anc)  -> Safe and deterministic configuration
 
-- `[stat, anc]` → `pipeline([stat], anc)` **[IN]** ✓ Safe configuration
-- `[stat, none, anc]` → `pipeline([stat, none], anc)` **[IN]** ✓ Safe (equivalent)
-- `[none, stat, anc]` → `pipeline([none, stat], anc)` **[IN]** ✓ Safe (equivalent)
 
-### Defeated Configurations (Area 2 eliminated)
+--------------------------------------------------------------------
+2. DEFEATED CONFIGURATIONS (Area 2 eliminated)
+--------------------------------------------------------------------
+PIPELINE               STATUS   REASON                                     ATTACKED BY
+-----------------------------------------------------------------------------------------------
+[]                     [OUT]    No filter (SOTIF violation)                mandatory_filter
+[none]                 [OUT]    Insufficient filter                        mandatory_filter
+[*, none] / [none, *]  [OUT]    Redundant/Insufficient multi-step filter   mandatory_filter
+[rad]                  [OUT]    Exceeds hardware latency (FuSa)            invalid_rad
+[rad, *] / [*, rad]    [OUT]    Exceeds hardware latency (FuSa)            invalid_rad
+[stat, cen]            [OUT]    Architectural incompatibility              invalid_stat_cen
 
-| Pipeline              | Status | Reason                                   | Attacked by              |
-|-----------------------|--------|------------------------------------------|--------------------------|
-| `[]`                  | OUT    | No filter (SOTIF violation)              | `mandatory_filter`       |
-| `[none]`              | OUT    | Insufficient filter                      | `mandatory_filter`       |
-| `[rad]`               | OUT    | Exceeds hardware latency (FuSa)          | `invalid_rad`            |
-| `[rad, *]`            | OUT    | Exceeds hardware latency (FuSa)          | `invalid_rad`            |
-| `[stat, cen]`         | OUT    | Architectural incompatibility            | `invalid_stat_cen`       |
 
-### Key Rebuttals (Explainability Evidence)
+--------------------------------------------------------------------
+3. KEY REBUTTALS (Explainability Evidence)
+--------------------------------------------------------------------
+* rain + c1                 -> rebuts empty and 'none'-containing pipelines
+* night + c1_night          -> rebuts empty and 'none'-containing pipelines (nuScenes validation)
+* jetson + c2               -> rebuts all pipelines containing 'rad'
+* v2x_hazard + cv1          -> reinforces mandatory filter requirement
+* v2x_latency_high + cv2    -> reinforces invalid_rad
+* c3                        -> rebuts all 'stat' + 'cen' combinations
 
-- `rain` + `c1`          rebuts empty and `none` pipelines
-- `jetson` + `c2`        rebuts all pipelines containing `rad`
-- `v2x_hazard` + `cv1`   reinforces mandatory filter requirement
-- `v2x_latency_high` + `cv2` reinforces `invalid_rad`
-- `c3`                   rebuts all `stat` + `cen` combinations
 
-**Conclusion:** The argumentation engine successfully eliminates all known unsafe (Area 2) configurations while preserving only the safe functional pipeline `[stat, anc]` (and its permutations). This demonstrates formal safety guarantees with deterministic reasoning.
+--------------------------------------------------------------------
+CONCLUSION
+--------------------------------------------------------------------
+The argumentation engine successfully eliminates all known unsafe 
+(Area 2) configurations and redundant search spaces, converging on 
+exactly one safe, functional pipeline: [stat, anc]. 
+This demonstrates formal safety guarantees with deterministic, 
+sub-millisecond reasoning.
 
 Repository: SafeDrive-V2X
