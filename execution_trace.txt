@@ -2,7 +2,7 @@
 HAMLET-V2X Execution Trace - LiDAR Perception Case Study
 ====================================================================
 
-Scenario: Rain + Night + Jetson + V2X Hazard Warning active
+Scenario: Rain + Jetson + V2X Hazard + V2X High Latency active
 
 --------------------------------------------------------------------
 1. GROUNDED EXTENSION (Final Safe Search Space)
@@ -31,10 +31,9 @@ PIPELINE               STATUS   REASON                                     ATTAC
 3. KEY REBUTTALS (Explainability Evidence)
 --------------------------------------------------------------------
 * rain + c1                 -> rebuts empty and 'none'-containing pipelines
-* night + c1_night          -> rebuts empty and 'none'-containing pipelines (nuScenes validation)
 * jetson + c2               -> rebuts all pipelines containing 'rad'
 * v2x_hazard + cv1          -> reinforces mandatory filter requirement
-* v2x_latency_high + cv2    -> reinforces invalid_rad
+* v2x_latency_high + cv2    -> reinforces invalid_rad under latency stress
 * c3                        -> rebuts all 'stat' + 'cen' combinations
 
 
@@ -44,7 +43,8 @@ CONCLUSION
 The argumentation engine successfully eliminates all known unsafe 
 (Area 2) configurations and redundant search spaces, converging on 
 exactly one safe, functional pipeline: [stat, anc]. 
-This demonstrates formal safety guarantees with deterministic, 
-sub-millisecond reasoning.
+This demonstrates formal safety guarantees with deterministic 
+reasoning and a bounded logical overhead of 3.24 ms, well within 
+automotive perception cycle budgets.
 
 Repository: SafeDrive-V2X
